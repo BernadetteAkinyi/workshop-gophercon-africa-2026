@@ -1,0 +1,124 @@
+package pages
+
+import (
+	"strconv"
+	"workshop/internal/domain/sighting"
+	"workshop/web/views/components"
+	"workshop/web/views/layout"
+)
+
+templ Sighting(s sighting.Sighting) {
+	{{ animal, known := components.AnimalOf(s.Species) }}
+	@layout.Base(layout.BaseProps{
+		Title:       components.DisplayName(s) + ", " + s.HappenedAt.Format("2 January 2006"),
+		Description: components.DisplayName(s) + " seen in " + components.Place(s.Location) + ".",
+		Map:         hasPosition(s),
+	}) {
+		<nav class="breadcrumb" aria-label="Breadcrumb">
+			<a href="/#sightings">Sightings</a>
+			if known {
+				<span aria-hidden="true">/</span>
+				<a href={ templ.SafeURL(components.AnimalURL(animal)) }>{ components.AnimalName(animal) }</a>
+			}
+		</nav>
+		<header class="page-head">
+			<p class="eyebrow">Sighting · <time datetime={ s.HappenedAt.Format("2006-01-02") }>{ s.HappenedAt.Format("Monday 2 January 2006") }</time></p>
+			<h1>{ components.DisplayName(s) }</h1>
+			if s.Species.ScientificName != "" {
+				<p class="page-head__scientific">{ s.Species.ScientificName }</p>
+			}
+			<p class="page-head__place">{ components.Place(s.Location) }</p>
+		</header>
+		<div class="detail">
+			<section class="detail__photos" aria-labelledby="photos-title">
+				<h2 id="photos-title" class="visually-hidden">Photos</h2>
+				@components.Gallery(s.Media)
+			</section>
+			<aside class="detail__side">
+				<section class="panel" aria-labelledby="weather-title">
+					<h2 id="weather-title">The weather that day</h2>
+					@components.WeatherDetail(s.Weather)
+				</section>
+				<section class="panel" aria-labelledby="record-title">
+					<h2 id="record-title">The record</h2>
+					<dl class="facts">
+						if n := components.Individuals(s.IndividualCount); n != "" {
+							<dt>How many</dt>
+							<dd>{ n }</dd>
+						}
+						<dt>Recorded by</dt>
+						if s.RecordedBy != "" {
+							<dd>{ s.RecordedBy }</dd>
+						} else {
+							<dd class="muted">Not recorded</dd>
+						}
+						if b := components.Basis(s.BasisOfRecord); b != "" {
+							<dt>Kind of record</dt>
+							<dd>{ b }</dd>
+						}
+						if s.Remarks != "" {
+							<dt>Notes</dt>
+							<dd>{ s.Remarks }</dd>
+						}
+						<dt>Source</dt>
+						<dd>
+							<a href={ templ.SafeURL("https://www.gbif.org/occurrence/" + strconv.FormatInt(s.GBIFKey, 10)) } rel="noopener">GBIF record { strconv.FormatInt(s.GBIFKey, 10) }</a>
+							if s.ReferenceURL != "" {
+								<br/>
+								<a href={ templ.URL(s.ReferenceURL) } rel="noopener">The original record</a>
+							}
+						</dd>
+					</dl>
+				</section>
+			</aside>
+		</div>
+		<section class="section detail__where" aria-labelledby="where-title">
+			<div class="section__head">
+				<h2 id="where-title">Where</h2>
+			</div>
+			<div class="where">
+				<dl class="facts">
+					<dt>Place</dt>
+					<dd>{ components.Place(s.Location) }</dd>
+					if s.Location.CountryCode != "" {
+						<dt>Country</dt>
+						<dd><a href={ templ.SafeURL(components.CountryURL(s.Location.CountryCode)) }>{ countryName(s.Location.CountryCode, []sighting.Sighting{ s }) }</a></dd>
+					}
+					if hasPosition(s) {
+						<dt>Position</dt>
+						<dd>{ components.Coords(s.Location.Coordinates) }</dd>
+					}
+					if s.Location.CoordinateUncertaintyInMetres != nil {
+						<dt>Accurate to</dt>
+						<dd>{ components.Distance(*s.Location.CoordinateUncertaintyInMetres) }</dd>
+					}
+					if s.Location.ElevationInMetres != nil {
+						<dt>Elevation</dt>
+						<dd>{ components.Metres(*s.Location.ElevationInMetres) }</dd>
+					}
+				</dl>
+				if hasPosition(s) {
+					@components.Map(components.MapProps{
+						Points:  components.MapPoints([]sighting.Sighting{ s }),
+						Label:   "Map of where this sighting was",
+						Class:   "map--dark map--small",
+						MaxZoom: 7,
+					})
+				}
+			</div>
+		</section>
+		<section class="section" aria-labelledby="taxonomy-title">
+			<div class="section__head">
+				<h2 id="taxonomy-title">Its family tree</h2>
+			</div>
+			<ol class="taxonomy">
+				for _, rank := range taxonomy(s) {
+					<li><span>{ rank.Name }</span>{ rank.Value }</li>
+				}
+			</ol>
+		</section>
+		if known {
+			<p class="section"><a class="button" href={ templ.SafeURL(components.AnimalURL(animal)) }>More { components.AnimalName(animal) } sightings →</a></p>
+		}
+	}
+}

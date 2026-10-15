@@ -1,0 +1,8 @@
+{
+	"name": "Night Safari",
+	"short_name": "NightSafari",
+	"icons": [{ "src": "/assets/images/logo.svg", "sizes": "any", "type": "image/svg+xml" }],
+	"theme_color": "#0E1420",
+	"background_color": "#0E1420",
+	"display": "standalone"
+}

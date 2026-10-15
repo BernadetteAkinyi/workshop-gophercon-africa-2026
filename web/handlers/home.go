@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"workshop/internal/domain/sighting"
+	"workshop/internal/domain/species"
 	"workshop/web/views/pages"
 )
 
@@ -12,12 +13,37 @@ type SightingsLister interface {
 	List(ctx context.Context, filter sighting.ListFilter) ([]sighting.Sighting, error)
 }
 
+// africanWildlife is every animal the site shows, on every page that lists sightings.
+var africanWildlife = []species.Animal{
+	species.AnimalLion,
+	species.AnimalLeopard,
+	species.AnimalElephant,
+	species.AnimalRhinoceros,
+	species.AnimalAfricanBuffalo,
+	species.AnimalCheetah,
+	species.AnimalGiraffe,
+	species.AnimalZebra,
+	species.AnimalHippopotamus,
+	species.AnimalWildebeest,
+	species.AnimalImpala,
+	species.AnimalCommonWarthog,
+	species.AnimalSpottedHyena,
+	species.AnimalAfricanWildDog,
+	species.AnimalNileCrocodile,
+	species.AnimalGorilla,
+	species.AnimalChimpanzee,
+	species.AnimalRingTailedLemur,
+	species.AnimalAfricanPenguin,
+	species.AnimalGreaterFlamingo,
+	species.AnimalShoebill,
+}
+
 func Home(logger *slog.Logger, sightings SightingsLister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		items, err := sightings.List(ctx, sighting.ListFilter{
-			Limit: 50,
+			Animals: africanWildlife,
 		})
 		if err != nil {
 			logger.ErrorContext(ctx, "handlers: listing sightings: "+err.Error())

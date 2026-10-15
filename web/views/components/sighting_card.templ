@@ -11,32 +11,38 @@ import (
 )
 
 templ SightingCard(s sighting.Sighting) {
-	<article class="card">
-		<!-- Header -->
-		<header class="card__header">
-			<h2>{ displayName(s.Species) }</h2>
-			if s.Species.ScientificName != "" {
-				<p class="card__scientific">{ s.Species.ScientificName }</p>
+	<article class="card" id={ Anchor(s) }>
+		<a class="card__photo" href={ templ.SafeURL(SightingURL(s)) } tabindex="-1" aria-hidden="true">
+			if p, ok := firstPhoto(s); ok {
+				<img src={ p.URL } alt="" loading="lazy" width="400" height="300"/>
+			} else {
+				<span class="card__nophoto">No photo</span>
 			}
-		</header>
-		<!-- Meta -->
-		<dl class="card__meta">
-			<dt>Seen</dt>
-			<dd>{ s.HappenedAt.Format("2 January 2006") }</dd>
-			<dt>Where</dt>
-			<dd>{ place(s.Location) }</dd>
-			if s.IndividualCount != nil {
-				<dt>Count</dt>
-				<dd>{ individuals(*s.IndividualCount) }</dd>
-			}
-			if s.RecordedBy != "" {
-				<dt>Recorded by</dt>
-				<dd>{ s.RecordedBy }</dd>
-			}
-		</dl>
-		<!-- Gallery -->
-		<div class="card__gallery">
-			@Gallery(s.Media)
+		</a>
+		<div class="card__body">
+			<header class="card__header">
+				<h3 class="card__title"><a href={ templ.SafeURL(SightingURL(s)) }>{ displayName(s.Species) }</a></h3>
+				if s.Species.ScientificName != "" {
+					<p class="card__scientific">{ s.Species.ScientificName }</p>
+				}
+			</header>
+			<dl class="card__meta">
+				<dt>Seen</dt>
+				<dd><time datetime={ s.HappenedAt.Format("2006-01-02") }>{ s.HappenedAt.Format("2 Jan 2006") }</time></dd>
+				<dt>Where</dt>
+				<dd>{ place(s.Location) }</dd>
+				if s.IndividualCount != nil {
+					<dt>Count</dt>
+					<dd>{ individuals(*s.IndividualCount) }</dd>
+				}
+				if s.RecordedBy != "" {
+					<dt>By</dt>
+					<dd class="card__observers">{ s.RecordedBy }</dd>
+				}
+			</dl>
+			<div class="card__weather">
+				@Weather(s.Weather)
+			</div>
 		</div>
 	</article>
 }

@@ -1,27 +1,97 @@
 package pages
 
 import (
+	"strconv"
 	"workshop/internal/domain/sighting"
 	"workshop/web/views/components"
 	"workshop/web/views/layout"
 )
 
 templ Home(sightings []sighting.Sighting) {
+	{{ sum := sighting.Summarise(sightings) }}
+	{{ byYear := sighting.CountByYear(sightings) }}
+	{{ tiles := components.AnimalTiles(sightings) }}
 	@layout.Base(layout.BaseProps{
-		Title: "Sightings",
+		Title:       "African wildlife after dark",
+		Description: "Sightings of Africa's wildlife on a map, a globe and a photo wall, with the weather on the day each was seen.",
+		Page:        "home",
+		Map:         true,
+		Globe:       len(sightings) > 0,
 	}) {
-		<h1>Sightings</h1>
-		if len(sightings) == 0 {
-			<p>No sightings have been ingested yet.</p>
-		} else {
-			<p>Total: { len(sightings) }</p>
-			<ul class="sightings">
-				for _, s := range sightings {
-					<li>
-						@components.SightingCard(s)
-					</li>
+		<section class="hero">
+			<div class="hero__text">
+				<p class="eyebrow">Wildlife sightings · Africa</p>
+				<h1>Africa’s wildlife, plotted under the night sky</h1>
+				if len(sightings) == 0 {
+					<p class="hero__lede">No sightings have been ingested yet.</p>
+				} else {
+					<p class="hero__lede">
+						{ strconv.Itoa(sum.Sightings) } sightings of { strconv.Itoa(len(tiles)) } animals in { strconv.Itoa(sum.Countries) } countries,
+						recorded from { strconv.Itoa(sum.Earliest.Year()) } to { strconv.Itoa(sum.Latest.Year()) }.
+					</p>
+					<p class="hero__actions">
+						<a class="button" href="#map">See the map</a>
+						<a class="button button--ghost" href="/gallery">Browse the photos</a>
+					</p>
 				}
-			</ul>
+			</div>
+			if len(sightings) > 0 {
+				<div class="hero__globe">
+					@components.Globe(components.GlobePoints(sightings))
+				</div>
+			}
+		</section>
+		if len(sightings) > 0 {
+			<section class="section strip reveal" aria-labelledby="numbers-title">
+				<div class="strip__figures">
+					<h2 id="numbers-title" class="visually-hidden">In numbers</h2>
+					<dl class="figures figures--row">
+						<div class="figures__item"><dt>sightings</dt><dd>{ strconv.Itoa(sum.Sightings) }</dd></div>
+						<div class="figures__item"><dt>animals</dt><dd>{ strconv.Itoa(len(tiles)) }</dd></div>
+						<div class="figures__item"><dt>countries</dt><dd>{ strconv.Itoa(sum.Countries) }</dd></div>
+						<div class="figures__item"><dt>photos</dt><dd>{ strconv.Itoa(sum.Media) }</dd></div>
+					</dl>
+				</div>
+				<div class="strip__chart">
+					<p class="strip__label">Sightings per year, { strconv.Itoa(sum.Earliest.Year()) }–{ strconv.Itoa(sum.Latest.Year()) }</p>
+					@components.Sparkline(byYear, sum)
+					<a class="more" href="/stats">All the statistics →</a>
+				</div>
+			</section>
+			<section id="map" class="section reveal" aria-labelledby="map-title">
+				<div class="section__head">
+					<h2 id="map-title">Where they were seen</h2>
+					<p>Zoom in and the groups split apart. Click a dot to open that sighting.</p>
+				</div>
+				@components.Map(components.MapProps{
+					Points:  components.MapPoints(sightings),
+					Cluster: true,
+					Label:   "Map of every sighting, grouped by area",
+					Class:   "map--dark",
+				})
+			</section>
+			<section id="animals" class="section reveal" aria-labelledby="animals-title">
+				<div class="section__head">
+					<h2 id="animals-title">Meet the animals</h2>
+					<p>Each has a page of its own, with its map and its photos.</p>
+				</div>
+				@components.AnimalWall(tiles)
+			</section>
+			<section id="sightings" class="section" aria-labelledby="sightings-title">
+				<div class="section__head reveal">
+					<h2 id="sightings-title">Every sighting</h2>
+					<p>Newest first. Narrow them by animal or country, or search for a place or a name.</p>
+				</div>
+				@components.Filter(components.FilterProps{
+					Target: "sightings-list",
+					Search: true,
+					Groups: []components.FilterGroup{
+						{Key: "animal", Label: "Animal", Options: components.FilterOptions(sightings, 12, components.Animal)},
+						{Key: "country", Label: "Country", Options: components.FilterOptions(sightings, 10, components.Country)},
+					},
+				})
+				@components.SightingList(sightings, "sightings-list")
+			</section>
 		}
 	}
 }

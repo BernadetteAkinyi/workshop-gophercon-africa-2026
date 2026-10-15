@@ -1,0 +1,95 @@
+package pages
+
+import (
+	"strconv"
+	"workshop/internal/domain/sighting"
+	"workshop/internal/domain/sighting/country"
+	"workshop/internal/domain/species"
+	"workshop/web/views/components"
+	"workshop/web/views/layout"
+)
+
+templ Animal(a species.Animal, sightings []sighting.Sighting) {
+	{{ sum := sighting.Summarise(sightings) }}
+	{{ byYear := sighting.CountByYear(sightings) }}
+	@layout.Base(layout.BaseProps{
+		Title:       components.AnimalName(a),
+		Description: "Every sighting of the " + components.AnimalName(a) + ", on a map and in photos.",
+		Map:         len(sightings) > 0,
+	}) {
+		<nav class="breadcrumb" aria-label="Breadcrumb">
+			<a href="/#animals">Animals</a>
+		</nav>
+		<header class="page-head">
+			<p class="eyebrow">Animal</p>
+			<h1>{ components.AnimalName(a) }</h1>
+			if names := scientificNames(sightings); names != "" {
+				<p class="page-head__scientific">{ names }</p>
+			}
+		</header>
+		@listing(sightings, sum, byYear, components.TopCountries(sightings, 8), "Where they were seen most")
+	}
+}
+
+templ Country(code country.Code, sightings []sighting.Sighting) {
+	{{ sum := sighting.Summarise(sightings) }}
+	{{ byYear := sighting.CountByYear(sightings) }}
+	{{ name := countryName(code, sightings) }}
+	@layout.Base(layout.BaseProps{
+		Title:       "Wildlife in " + name,
+		Description: "Every sighting of African wildlife in " + name + ", on a map and in photos.",
+		Map:         len(sightings) > 0,
+	}) {
+		<nav class="breadcrumb" aria-label="Breadcrumb">
+			<a href="/stats#countries">Countries</a>
+		</nav>
+		<header class="page-head">
+			<p class="eyebrow">Country</p>
+			<h1>{ name }</h1>
+		</header>
+		@listing(sightings, sum, byYear, components.TopAnimals(sightings, 8), "The animals seen most")
+	}
+}
+
+templ listing(sightings []sighting.Sighting, sum sighting.Summary, byYear map[int]int, ranked []components.BarLink, rankedTitle string) {
+	if len(sightings) == 0 {
+		<p class="empty">No sightings here yet. <a href="/">Back to every sighting</a>.</p>
+	} else {
+		<section class="section overview reveal" aria-label="Overview">
+			<div class="panel">
+				<p class="overview__lede">
+					{ strconv.Itoa(sum.Sightings) } sightings in { strconv.Itoa(sum.Countries) } countries,
+					from { strconv.Itoa(sum.Earliest.Year()) } to { strconv.Itoa(sum.Latest.Year()) }.
+				</p>
+				@components.Sparkline(byYear, sum)
+				@components.Columns(components.Months(sightings), "Sightings in each month of the year")
+			</div>
+			<div class="panel">
+				<h2>{ rankedTitle }</h2>
+				@components.BarLinks(ranked)
+			</div>
+		</section>
+		<section class="section reveal" aria-labelledby="map-title">
+			<div class="section__head"><h2 id="map-title">On the map</h2></div>
+			@components.Map(components.MapProps{
+				Points:  components.MapPoints(sightings),
+				Cluster: len(sightings) > 150,
+				Label:   "Map of these sightings",
+				Class:   "map--dark",
+			})
+		</section>
+		if len(components.PhotoItems(sightings, 1)) > 0 {
+			<section class="section reveal" aria-labelledby="photos-title">
+				<div class="section__head">
+					<h2 id="photos-title">Photos</h2>
+					<p><a href="/gallery">The whole gallery →</a></p>
+				</div>
+				@components.PhotoWall(sightings, 12, false)
+			</section>
+		}
+		<section class="section" aria-labelledby="list-title">
+			<div class="section__head reveal"><h2 id="list-title">Every sighting</h2></div>
+			@components.SightingList(sightings, "sightings-list")
+		</section>
+	}
+}

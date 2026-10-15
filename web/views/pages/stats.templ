@@ -1,0 +1,77 @@
+package pages
+
+import (
+	"workshop/internal/domain/sighting"
+	"workshop/web/views/components"
+	"workshop/web/views/layout"
+)
+
+templ Stats(sightings []sighting.Sighting) {
+	{{ sum := sighting.Summarise(sightings) }}
+	{{ byYear := sighting.CountByYear(sightings) }}
+	@layout.Base(layout.BaseProps{
+		Title:       "Statistics",
+		Description: "The sightings in numbers: when, where, which animals and in what weather.",
+		Page:        "stats",
+	}) {
+		<header class="page-head">
+			<p class="eyebrow">In numbers</p>
+			<h1>Statistics</h1>
+		</header>
+		if len(sightings) == 0 {
+			<p class="empty">No sightings have been ingested yet.</p>
+		} else {
+			<section class="section reveal" aria-label="Headline figures">
+				@components.Figures(components.Facts(sightings, sum))
+			</section>
+			<section class="section stats-grid reveal">
+				<div class="panel panel--wide">
+					<h2>Sightings per year</h2>
+					@components.Sparkline(byYear, sum)
+					@components.Columns(components.Decades(sightings, sum), "Sightings per decade")
+				</div>
+				<div class="panel">
+					<h2>The animals seen most</h2>
+					@components.BarLinks(components.TopAnimals(sightings, 10))
+				</div>
+				<div class="panel" id="countries">
+					<h2>The countries with most sightings</h2>
+					@components.BarLinks(components.TopCountries(sightings, 10))
+				</div>
+				<div class="panel">
+					<h2>Which month they were seen</h2>
+					@components.Columns(components.Months(sightings), "Sightings in each month of the year")
+				</div>
+				<div class="panel">
+					<h2>How hot it was</h2>
+					@components.Columns(components.Temperatures(sightings), "Sightings by temperature on the day")
+				</div>
+				<div class="panel">
+					<h2>The sky that day</h2>
+					@components.Bars(components.Tallies(sightings, 8, components.Sky))
+				</div>
+				<div class="panel">
+					<h2>Who records the most</h2>
+					@components.Bars(components.Tallies(sightings, 8, recorder))
+				</div>
+			</section>
+			<section class="section reveal" aria-labelledby="records-title">
+				<div class="section__head">
+					<h2 id="records-title">Record holders</h2>
+					<p>The stand-out sightings. Each links to its own page.</p>
+				</div>
+				<ul class="records">
+					for _, r := range components.Records(sightings) {
+						<li class="record">
+							<p class="record__label">{ r.Label }</p>
+							<p class="record__value">{ r.Value }</p>
+							<a href={ templ.SafeURL(components.SightingURL(r.Sighting)) }>
+								{ components.DisplayName(r.Sighting) }, { r.Sighting.Location.Country }, { r.Sighting.HappenedAt.Format("Jan 2006") }
+							</a>
+						</li>
+					}
+				</ul>
+			</section>
+		}
+	}
+}

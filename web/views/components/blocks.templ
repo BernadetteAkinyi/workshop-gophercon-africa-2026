@@ -1,0 +1,87 @@
+package components
+
+import "workshop/internal/domain/sighting"
+
+templ AnimalWall(tiles []AnimalTile) {
+	if len(tiles) > 0 {
+		<ul class="animal-wall">
+			for _, t := range tiles {
+				<li>
+					<a class="animal-tile" href={ templ.SafeURL(AnimalURL(t.Animal)) }>
+						if t.Photo != "" {
+							<img src={ t.Photo } alt="" loading="lazy" width="320" height="320"/>
+						}
+						<span class="animal-tile__name">{ t.Name }</span>
+						<span class="animal-tile__count">{ plural(t.Count, "sighting") }</span>
+					</a>
+				</li>
+			}
+		</ul>
+	}
+}
+
+templ BarLinks(rows []BarLink) {
+	if len(rows) > 0 {
+		<ol class="bars">
+			for _, row := range rows {
+				<li class="bars__row" style={ BarWidth(row.Count, rows) }>
+					<a class="bars__name" href={ templ.SafeURL(row.Href) }>{ row.Name }</a>
+					<span class="bars__count">{ row.Count }</span>
+				</li>
+			}
+		</ol>
+	}
+}
+
+templ Columns(cols []Column, label string) {
+	if len(cols) > 0 {
+		<ol class="columns" aria-label={ label }>
+			for _, c := range cols {
+				<li class="columns__col" style={ ColumnHeight(c, cols) }>
+					<span class="columns__bar" aria-hidden="true"></span>
+					<span class="columns__count">{ c.Count }</span>
+					<span class="columns__label">{ c.Label }</span>
+				</li>
+			}
+		</ol>
+	}
+}
+
+templ Figures(facts []Fact) {
+	<dl class="figures">
+		for _, f := range facts {
+			<div class="figures__item">
+				<dt>{ f.Label }</dt>
+				<dd>{ f.Value }</dd>
+			</div>
+		}
+	</dl>
+}
+
+templ PhotoWall(sightings []sighting.Sighting, limit int, filterable bool) {
+	<ul class="photo-wall" id="photos">
+		for _, p := range PhotoItems(sightings, limit) {
+			<li { photoAttrs(p, filterable)... }>
+				<figure class="photo">
+					<a href={ templ.URL(p.Photo.URL) } data-lightbox data-caption={ photoCaption(p) }>
+						<img src={ p.Photo.URL } alt={ photoAlt(p) } loading="lazy" width="400" height="400"/>
+					</a>
+					<figcaption>
+						<a href={ templ.SafeURL(SightingURL(p.Sighting)) }>{ DisplayName(p.Sighting) }</a>
+						<span>{ p.Sighting.Location.Country }</span>
+					</figcaption>
+				</figure>
+			</li>
+		}
+	</ul>
+}
+
+templ SightingList(sightings []sighting.Sighting, id string) {
+	<ul class="sightings" id={ id }>
+		for _, s := range sightings {
+			<li { FilterAttrs(s)... }>
+				@SightingCard(s)
+			</li>
+		}
+	</ul>
+}
