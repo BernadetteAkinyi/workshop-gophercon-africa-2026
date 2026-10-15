@@ -75,7 +75,6 @@ templ listing(sightings []sighting.Sighting, sum sighting.Summary, byYear map[in
 				Points:  components.MapPoints(sightings),
 				Cluster: len(sightings) > 150,
 				Label:   "Map of these sightings",
-				Class:   "map--dark",
 			})
 		</section>
 		if len(components.PhotoItems(sightings, 1)) > 0 {

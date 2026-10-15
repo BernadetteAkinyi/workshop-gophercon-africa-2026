@@ -428,7 +428,7 @@ func Sighting(s sighting.Sighting) templ.Component {
 				templ_7745c5c3_Err = components.Map(components.MapProps{
 					Points:  components.MapPoints([]sighting.Sighting{s}),
 					Label:   "Map of where this sighting was",
-					Class:   "map--dark map--small",
+					Class:   "map--small",
 					MaxZoom: 7,
 				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {

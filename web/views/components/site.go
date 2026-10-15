@@ -229,3 +229,27 @@ func plural(n int, noun string) string {
 	}
 	return fmt.Sprintf("%d %ss", n, noun)
 }
+
+// heroAnimals are the animals the banner photo is chosen from, in order of preference.
+var heroAnimals = []species.Animal{
+	species.AnimalLion, species.AnimalLeopard, species.AnimalElephant, species.AnimalCheetah,
+	species.AnimalGiraffe, species.AnimalZebra, species.AnimalRhinoceros,
+}
+
+// HeroPhoto picks a photo for the big banner, preferring the best-known animals.
+func HeroPhoto(sightings []sighting.Sighting) (PhotoItem, bool) {
+	for _, want := range heroAnimals {
+		for _, s := range sightings {
+			if a, ok := AnimalOf(s.Species); ok && a == want {
+				if p, ok := firstPhoto(s); ok {
+					return PhotoItem{Photo: p, Sighting: s}, true
+				}
+			}
+		}
+	}
+	items := PhotoItems(sightings, 1)
+	if len(items) == 0 {
+		return PhotoItem{}, false
+	}
+	return items[0], true
+}

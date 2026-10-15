@@ -301,7 +301,6 @@ func listing(sightings []sighting.Sighting, sum sighting.Summary, byYear map[int
 				Points:  components.MapPoints(sightings),
 				Cluster: len(sightings) > 150,
 				Label:   "Map of these sightings",
-				Class:   "map--dark",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

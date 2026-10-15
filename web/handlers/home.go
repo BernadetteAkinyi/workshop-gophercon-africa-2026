@@ -38,12 +38,26 @@ var africanWildlife = []species.Animal{
 	species.AnimalShoebill,
 }
 
+// featuredWildlife narrows the home page to the Big Five and the classic
+// safari animals; the animal, country and statistics pages keep the full set.
+var featuredWildlife = []species.Animal{
+	species.AnimalLion,
+	species.AnimalLeopard,
+	species.AnimalElephant,
+	species.AnimalRhinoceros,
+	species.AnimalAfricanBuffalo,
+	species.AnimalGiraffe,
+	species.AnimalZebra,
+	species.AnimalHippopotamus,
+	species.AnimalCheetah,
+}
+
 func Home(logger *slog.Logger, sightings SightingsLister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		items, err := sightings.List(ctx, sighting.ListFilter{
-			Animals: africanWildlife,
+			Animals: featuredWildlife,
 		})
 		if err != nil {
 			logger.ErrorContext(ctx, "handlers: listing sightings: "+err.Error())

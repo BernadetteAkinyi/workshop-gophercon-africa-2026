@@ -18,8 +18,8 @@ templ Base(props BaseProps) {
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<link rel="icon" href="/assets/images/logo.svg" type="image/svg+xml"/>
 			<link rel="manifest" href="/assets/manifest.json"/>
-			<meta name="theme-color" content="#0E1420"/>
-			<title>{ props.Title } · Night Safari</title>
+			<meta name="theme-color" content="#FBF6ED"/>
+			<title>{ props.Title } · Wild Africa</title>
 			if props.Description != "" {
 				<meta name="description" content={ props.Description }/>
 			}
@@ -36,7 +36,7 @@ templ Base(props BaseProps) {
 			}
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"/>
+			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..500&family=Manrope:wght@400;500&display=swap"/>
 			if props.Map {
 				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
 				<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous"/>
@@ -59,11 +59,12 @@ templ Base(props BaseProps) {
 				<div class="site-header__inner">
 					<a class="logo" href="/">
 						<img src="/assets/images/logo.svg" alt="" width="40" height="40"/>
-						<span class="logo__name">Night Safari</span>
+						<span class="logo__name">Wild Africa</span>
 					</a>
 					<nav class="site-nav" aria-label="Main">
-						@navLink("/", "Sightings", props.Page == "home")
-						@navLink("/#map", "Map", false)
+						@navLink("/#sightings", "Sightings", props.Page == "home")
+						@navLink("/#idea", "The idea", false)
+						@navLink("/#animals", "Animals", false)
 						@navLink("/gallery", "Gallery", props.Page == "gallery")
 						@navLink("/stats", "Statistics", props.Page == "stats")
 					</nav>
@@ -74,8 +75,14 @@ templ Base(props BaseProps) {
 			</main>
 			<footer class="site-footer">
 				<div class="container site-footer__inner">
-					<p>Sightings of African wildlife, from records shared on <a href="https://www.gbif.org" rel="noopener">GBIF</a>. Weather from <a href="https://open-meteo.com" rel="noopener">Open-Meteo</a>.</p>
-					<p>Made at GopherCon Africa with Go and templ.</p>
+					<div class="site-footer__brand">
+						<p class="site-footer__name">Wild Africa</p>
+						<p>A celebration of Africa’s wildlife, one sighting at a time.</p>
+					</div>
+					<div>
+						<p>Sightings from records shared on <a href="https://www.gbif.org" rel="noopener">GBIF</a>. Weather from <a href="https://open-meteo.com" rel="noopener">Open-Meteo</a>. Maps © OpenStreetMap contributors.</p>
+						<p>Made at GopherCon Africa with Go and templ.</p>
+					</div>
 				</div>
 			</footer>
 			@components.Lightbox()

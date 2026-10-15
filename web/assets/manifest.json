@@ -1,8 +1,8 @@
 {
-	"name": "Night Safari",
-	"short_name": "NightSafari",
+	"name": "Wild Africa",
+	"short_name": "Wild Africa",
 	"icons": [{ "src": "/assets/images/logo.svg", "sizes": "any", "type": "image/svg+xml" }],
-	"theme_color": "#0E1420",
-	"background_color": "#0E1420",
+	"theme_color": "#FBF6ED",
+	"background_color": "#FBF6ED",
 	"display": "standalone"
 }

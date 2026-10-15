@@ -1,13 +1,13 @@
-// The home page's globe: the Earth at night, turning slowly, with a glowing
+// The home page's globe: the Earth by day, turning slowly, with a glowing
 // dot for every sighting. Drag to turn it. The positions come from the
 // #globe-points JSON the page writes out, as [lat, lng] pairs of numbers.
 
 import { mount } from '/assets/js/threejs.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// NASA's "Earth at night", from three.js's own examples. If it can't load,
-// the globe stays plain night blue and the dots still show.
-const LIGHTS = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r186/examples/textures/planets/earth_lights_2048.png';
+// NASA's Earth by day, from three.js's own examples. If it can't load,
+// the globe stays plain olive and the dots still show.
+const EARTH = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r186/examples/textures/planets/earth_atmos_2048.jpg';
 const RADIUS = 1.6;
 
 function readPoints() {
@@ -47,9 +47,10 @@ function glowTexture(THREE) {
 }
 
 mount('globe', function ({ THREE, scene, camera, renderer, canvas, colour, still }) {
-	const night = colour('--three-globe', '#16233a');
-	const amber = colour('--three-primary', '#F5B841');
-	const teal = colour('--three-accent', '#3FB8AF');
+	const sea = colour('--three-globe', '#6F7D57');
+	const halo = colour('--three-accent', '#B4552F');
+	// Each dot takes one of the site's own colours, in turn.
+	const palette = ['--accent', '--ochre-light', '--white'].map((p, i) => colour(p, ['#B4552F', '#E0A93B', '#FFFDF8'][i]));
 
 	camera.position.set(0, 0.6, 5.2);
 
@@ -59,30 +60,31 @@ mount('globe', function ({ THREE, scene, camera, renderer, canvas, colour, still
 	globe.rotation.x = 0.15;
 	scene.add(globe);
 
-	const earthMaterial = new THREE.MeshBasicMaterial({ color: night });
+	const earthMaterial = new THREE.MeshBasicMaterial({ color: sea });
 	const earth = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 64, 48), earthMaterial);
 	globe.add(earth);
 
-	new THREE.TextureLoader().load(LIGHTS, function (texture) {
+	new THREE.TextureLoader().load(EARTH, function (texture) {
 		texture.colorSpace = THREE.SRGBColorSpace;
 		earthMaterial.map = texture;
-		// Tinted, so the city lights read as a faint amber on night blue.
-		earthMaterial.color = new THREE.Color(0xffffff).lerp(night, 0.35);
+		// Washed a little towards sage, so the globe sits softly on the page.
+		earthMaterial.color = new THREE.Color(0xffffff).lerp(sea, 0.25);
 		earthMaterial.needsUpdate = true;
 		if (still) renderer.render(scene, camera);
 	});
 
-	// Lines of latitude and longitude, very faint.
+	// Lines of latitude and longitude, very faint. Ink rather than white: the
+	// panel behind the globe is light, so a dark graticule is what shows.
 	globe.add(new THREE.Mesh(
 		new THREE.SphereGeometry(RADIUS * 1.002, 36, 18),
-		new THREE.MeshBasicMaterial({ color: teal, wireframe: true, transparent: true, opacity: 0.06 }),
+		new THREE.MeshBasicMaterial({ color: colour('--ink', '#2A2018'), wireframe: true, transparent: true, opacity: 0.12 }),
 	));
 
-	// A halo round the edge, brighter where the globe meets space.
+	// A soft clay halo round the edge, like the atmosphere.
 	globe.add(new THREE.Mesh(
 		new THREE.SphereGeometry(RADIUS * 1.18, 64, 48),
 		new THREE.ShaderMaterial({
-			uniforms: { glow: { value: teal } },
+			uniforms: { glow: { value: halo } },
 			vertexShader: `
 				varying vec3 vNormal;
 				void main() {
@@ -94,10 +96,9 @@ mount('globe', function ({ THREE, scene, camera, renderer, canvas, colour, still
 				varying vec3 vNormal;
 				void main() {
 					float rim = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-					gl_FragColor = vec4(glow, 1.0) * rim;
+					gl_FragColor = vec4(glow, clamp(rim, 0.0, 1.0) * 0.8);
 				}`,
 			side: THREE.BackSide,
-			blending: THREE.AdditiveBlending,
 			transparent: true,
 			depthWrite: false,
 		}),
@@ -106,39 +107,24 @@ mount('globe', function ({ THREE, scene, camera, renderer, canvas, colour, still
 	// Every sighting as one Points object, never a mesh each.
 	const data = readPoints();
 	const positions = new Float32Array(data.length * 3);
+	const colours = new Float32Array(data.length * 3);
 	data.forEach(function (p, i) {
 		toVector(THREE, p[0], p[1], RADIUS * 1.01).toArray(positions, i * 3);
+		palette[i % palette.length].toArray(colours, i * 3);
 	});
 	const geometry = new THREE.BufferGeometry();
 	geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+	geometry.setAttribute('color', new THREE.BufferAttribute(colours, 3));
 	const dots = new THREE.PointsMaterial({
-		color: amber,
+		vertexColors: true,
 		map: glowTexture(THREE),
-		size: 0.11,
+		size: 0.13,
 		sizeAttenuation: true,
 		transparent: true,
 		depthWrite: false,
-		blending: THREE.AdditiveBlending,
+		alphaTest: 0.05,
 	});
 	globe.add(new THREE.Points(geometry, dots));
-
-	// A few hundred stars behind it, for the night sky.
-	const starCount = 600;
-	const stars = new Float32Array(starCount * 3);
-	for (let i = 0; i < starCount; i++) {
-		const v = new THREE.Vector3().randomDirection().multiplyScalar(14 + Math.random() * 10);
-		v.toArray(stars, i * 3);
-	}
-	const starGeometry = new THREE.BufferGeometry();
-	starGeometry.setAttribute('position', new THREE.BufferAttribute(stars, 3));
-	const starField = new THREE.Points(starGeometry, new THREE.PointsMaterial({
-		color: 0xf2e9d8,
-		size: 0.05,
-		transparent: true,
-		opacity: 0.7,
-		depthWrite: false,
-	}));
-	scene.add(starField);
 
 	const controls = new OrbitControls(camera, canvas);
 	controls.enableZoom = false;
@@ -154,9 +140,8 @@ mount('globe', function ({ THREE, scene, camera, renderer, canvas, colour, still
 	});
 
 	return function (time) {
-		// The dots breathe a little, as though they were glowing.
-		dots.size = 0.11 + Math.sin(time * 2) * 0.015;
-		starField.rotation.y = time * 0.005;
+		// The dots breathe a little, so the globe feels alive.
+		dots.size = 0.13 + Math.sin(time * 2) * 0.02;
 		controls.update();
 	};
 });
